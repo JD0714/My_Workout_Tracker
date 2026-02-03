@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WEBSITE!!!</title>
+    <link rel="stylesheet" href="ss.css">
+
+  <!-- React -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+  <!-- Babel for JSX -->
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+</head>
+<body>
+
+    <div id="root"></div>
+
+    <script type="text/babel"> 
+
+    function App() {
+        return (
+        <div className="login-page">
+          <h1 className="title">Workout Tracker</h1>
+
+          <div className="login-box">
+            <h2>Login</h2>
+
+            <input type="text" placeholder="Username" />
+            <input type="password" placeholder="Password" />
+
+            <button className="login-btn">Log In</button>
+
+            <p className="signup-text">
+              Don't have an account? <a href="workout_signup.html">Sign up</a>
+            </p>
+          </div>
+        </div>
+      );}
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+    </script>
+</body>
+</html>
