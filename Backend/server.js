@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
-const cors = require("cors");   // ✅ make sure this is imported
+const cors = require("cors");   //  make sure this is imported
 const bcrypt = require("bcrypt");
 
 const app = express();
@@ -65,6 +65,38 @@ app.post("/api/signup", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+//
+// LOGIN ROUTE
+// ------------------------
+app.post("/api/login", async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ error: "Missing fields" });
+  }
+
+  try {
+    //check username
+    const existingUser = await User.findOne({ username });
+    if (!existingUser) {
+      return res.status(401).json({ error: "Invalid username or password" });
+    }
+
+    //check password
+    const isMatch = await bcrypt.compare(password, existingUser.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: "Invalid username or password" });
+    }
+
+    res.status(200).json({ message: "Login successful" });
+
+    } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+
 
 // ------------------------
 // START SERVER

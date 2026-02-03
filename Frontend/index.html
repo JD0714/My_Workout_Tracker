@@ -20,8 +20,39 @@
     <div id="root"></div>
 
     <script type="text/babel"> 
-
     function App() {
+
+      const [username, setUsername] = React.useState("");
+      const [password, setPassword] = React.useState("");
+      const [message, setMessage] = React.useState("");
+
+      const handelSignup = async () => {
+        if(!username || !password) {
+          setMessage("please enter both fields");
+          return;
+        }
+        
+        try {
+          const res = await fetch("https://workout-tracker-backend-slma.onrender.com/api/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+          });
+
+          const data = await res.json();
+
+          if (res.ok) {
+            setMessage("Logging In!");
+            setUsername("");
+            setPassword("");
+          } else {
+            setMessage(data.error);
+          }
+        } catch (err) {
+          setMessage("Server connection error");
+        }
+      };
+
         return (
         <div className="login-page">
           <h1 className="title">Workout Tracker</h1>
@@ -29,14 +60,26 @@
           <div className="login-box">
             <h2>Login</h2>
 
-            <input type="text" placeholder="Username" />
-            <input type="password" placeholder="Password" />
+            <input 
+              type="text" 
+              placeholder="Username" 
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+            />
+            <input 
+              type="password" 
+              placeholder="Password" 
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+            />
 
-            <button className="login-btn">Log In</button>
+            <button className="login-btn" onClick={handelSignup}  >Log In</button>
 
+            {message && <p>{message}</p>}
             <p className="signup-text">
               Don't have an account? <a href="workout_signup.html">Sign up</a>
             </p>
+
           </div>
         </div>
       );}
