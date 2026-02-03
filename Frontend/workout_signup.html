@@ -5,7 +5,7 @@
   <title>Workout Tracker</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <link rel="stylesheet" href="ss.css" />
+  <link rel="stylesheet" href="./ss.css" />
 
   <!-- React -->
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -48,32 +48,38 @@ function App() {
       } else {
         setMessage(data.error);
       }
-    } catch {
+    } catch (err) {
       setMessage("Server connection error");
     }
   };
 
   return (
     <div className="signup-page">
-      <h1>Workout Tracker</h1>
+      <h1 className="title">Workout Tracker</h1>
 
-      <input
-        type="text"
-        placeholder="Username"
-        value={username}
-        onChange={e => setUsername(e.target.value)}
-      />
+      <div className="signup-box">
+        <h2>Sign up</h2>
+        <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={e => setUsername(e.target.value)}
+        />
 
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={e => setPassword(e.target.value)}
-      />
+        <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+        />
 
-      <button onClick={handleSignup}>Sign Up</button>
+        <button className="signup-btn" onClick={handleSignup}>Continue</button>
 
-      {message && <p>{message}</p>}
+        {message && <p>{message}</p>}
+        <p className="signup-text">
+            Already have an account? <a href="workout_signin.html">Log In</a>
+        </p>
+        </div>
     </div>
   );
 }
