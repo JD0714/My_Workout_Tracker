@@ -9,7 +9,7 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(cors({
-  origin: "https://jd0714.github.io" // your GitHub Pages URL
+   origin: ["https://github.com/JD0714/myNewRepo", "http://localhost:5500"] // your GitHub Pages URL
 }));
 
 // Connect to MongoDB
