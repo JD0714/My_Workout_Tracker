@@ -14,9 +14,7 @@ const app = express();
 app.use(express.json());
 
 // Enable CORS for your frontend
-app.use(cors({
-   origin: ["https://jd0714.github.io", "http://localhost:5500"] // allow GitHub Pages + local testing
-}));
+app.use(cors());
 
 // ------------------------
 // DATABASE CONNECTION
