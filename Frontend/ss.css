@@ -136,3 +136,14 @@ html, body {
   font-weight: bold;
   cursor: pointer;
 }
+
+.random-btn {
+  width: 100%;
+  padding: 12px;
+  background: #2c5364;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+}
