@@ -1,23 +1,33 @@
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
-const cors = require("cors");
+const cors = require("cors");   // ✅ make sure this is imported
 const bcrypt = require("bcrypt");
 
 const app = express();
 
-// Middleware
+// ------------------------
+// MIDDLEWARE
+// ------------------------
+
+// Parse JSON bodies
 app.use(express.json());
+
+// Enable CORS for your frontend
 app.use(cors({
-   origin: ["https://github.com/JD0714/myNewRepo", "http://localhost:5500"] // your GitHub Pages URL
+   origin: ["https://jd0714.github.io", "http://localhost:5500"] // allow GitHub Pages + local testing
 }));
 
-// Connect to MongoDB
+// ------------------------
+// DATABASE CONNECTION
+// ------------------------
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
   .catch(err => console.error(err));
 
-// User schema
+// ------------------------
+// USER SCHEMA & MODEL
+// ------------------------
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true }
@@ -25,7 +35,9 @@ const UserSchema = new mongoose.Schema({
 
 const User = mongoose.model("User", UserSchema);
 
-// Signup route
+// ------------------------
+// SIGNUP ROUTE
+// ------------------------
 app.post("/api/signup", async (req, res) => {
   const { username, password } = req.body;
 
@@ -54,7 +66,9 @@ app.post("/api/signup", async (req, res) => {
   }
 });
 
-// Start server
+// ------------------------
+// START SERVER
+// ------------------------
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
