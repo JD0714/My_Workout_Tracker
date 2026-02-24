@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ path: "workout.env" });
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");   //  make sure this is imported
@@ -43,7 +43,7 @@ const User = mongoose.model("User_Info", UserSchema);
 app.post("/api/verify", async (req, res) => {
   const { username, password, email } = req.body;
 
-  if (!username || !password) {
+  if (!username || !password || !email) {
     return res.status(400).json({ error: "Missing fields" });
   }
 
@@ -57,6 +57,7 @@ app.post("/api/verify", async (req, res) => {
 
     const newUser = new User({
       username,
+      email,
       password: hashedPassword
     });
 
