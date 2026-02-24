@@ -34,14 +34,14 @@ function App() {
     }
   }, []);
 
-  const handleVerify = async () => {
+  const handleAuthentication = async () => {
     if (code.length !== 6) {
       setMessage("Please enter the 6-digit code");
       return;
     }
 
     try {
-      const res = await fetch("https://workout-tracker-backend-slma.onrender.com/api/verify", {
+      const res = await fetch("https://workout-tracker-backend-slma.onrender.com/api/authentication", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, code })
@@ -97,7 +97,7 @@ function App() {
           onChange={e => setCode(e.target.value)}
         />
 
-        <button className="signup-btn" onClick={handleVerify}>
+        <button className="signup-btn" onClick={handleAuthentication}>
           Verify
         </button>
 
