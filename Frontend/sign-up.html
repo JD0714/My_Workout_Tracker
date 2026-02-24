@@ -44,8 +44,7 @@ function App() {
 
       if (res.ok) {
         // Redirect to verify page and pass email in URL
-        window.location.href = `./authentication.html?email=${encodeURIComponent(email)}`;
-      } else {
+        window.location.href = `./frontend/authentication.html?email=${encodeURIComponent(email)}`;      } else {
         setMessage(data.error);
       }
     } catch (err) {
