@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Email Verification</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link rel="stylesheet" href="./stylesheet.css" />
+
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+function App() {
+  const [code, setCode] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const userEmail = params.get("email");
+
+    if (!userEmail) {
+      window.location.href = "./sign-up.html";
+    } else {
+      setEmail(userEmail);
+    }
+  }, []);
+
+  const handleVerify = async () => {
+    if (code.length !== 6) {
+      setMessage("Please enter the 6-digit code");
+      return;
+    }
+
+    try {
+      const res = await fetch("https://workout-tracker-backend-slma.onrender.com/api/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, code })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        window.location.href = "./index.html"; // redirect to login
+      } else {
+        setMessage(data.error || "Invalid or expired code");
+      }
+    } catch {
+      setMessage("Server error");
+    }
+  };
+
+  const handleResend = async () => {
+    try {
+      const res = await fetch("https://workout-tracker-backend-slma.onrender.com/api/resend-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setMessage("New verification code sent to your email.");
+      } else {
+        setMessage(data.error || "Error resending code");
+      }
+    } catch {
+      setMessage("Server error");
+    }
+  };
+
+  return (
+    <div className="signup-page">
+      <h1 className="title">Workout Tracker</h1>
+
+      <div className="signup-box">
+        <h2>Email Verification</h2>
+
+        <p>Enter the 6-digit code sent to:</p>
+        <strong>{email}</strong>
+
+        <input
+          type="text"
+          maxLength="6"
+          placeholder="Enter 6-digit code"
+          value={code}
+          onChange={e => setCode(e.target.value)}
+        />
+
+        <button className="signup-btn" onClick={handleVerify}>
+          Verify
+        </button>
+
+        <button
+          className="signup-btn"
+          style={{ marginTop: "10px", backgroundColor: "#777" }}
+          onClick={handleResend}
+        >
+          Resend Code
+        </button>
+
+        {message && <p>{message}</p>}
+
+        <p className="signup-text">
+          <a href="./sign-up.html">Back to Sign Up</a>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+
+</body>
+</html>

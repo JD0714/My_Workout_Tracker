@@ -1,0 +1,93 @@
+<!-- Page to login or to reroute to sign-up -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <title>WEBSITE!!!</title>
+    <link rel="stylesheet" href="./stylesheet.css">
+    
+
+  <!-- React -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+  <!-- Babel for JSX -->
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+</head>
+<body>
+
+    <div id="root"></div>
+
+    <script type="text/babel"> 
+    function App() {
+
+      const [username, setUsername] = React.useState("");
+      const [password, setPassword] = React.useState("");
+      const [message, setMessage] = React.useState("");
+
+      const handelSignup = async () => {
+        if(!username || !password) {
+          setMessage("please enter both fields");
+          return;
+        }
+        
+        try {
+          const res = await fetch("https://workout-tracker-backend-slma.onrender.com/api/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+          });
+
+          const data = await res.json();
+
+          if (res.ok) {
+            setMessage("Logging In!");
+            setUsername("");
+            setPassword("");
+            window.location.href = "home_page.html";
+          } else {
+            setMessage(data.error);
+          }
+        } catch (err) {
+          setMessage("Server connection error");
+        }
+      };
+
+        return (
+        <div className="login-page">
+          <h1 className="title">Workout Tracker</h1>
+
+          <div className="login-box">
+            <h2>Login</h2>
+
+            <input 
+              type="text" 
+              placeholder="Username" 
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+            />
+            <input 
+              type="password" 
+              placeholder="Password" 
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+            />
+
+            <button className="login-btn" onClick={handelSignup}>Log In</button>
+
+            {message && <p>{message}</p>}
+            <p className="signup-text">
+              Don't have an account? <a href="sign-up.html">Sign up</a>
+            </p>
+
+          </div>
+        </div>
+      );}
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+    </script>
+</body>
+</html>

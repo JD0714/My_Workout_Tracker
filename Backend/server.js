@@ -28,16 +28,20 @@ mongoose.connect(process.env.MONGO_URI)
 // ------------------------
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
-  password: { type: String, required: true }
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  verificationCode: { type: String },
+  isVerified: { type: Boolean, default: false }
 });
 
-const User = mongoose.model("User", UserSchema);
+const User = mongoose.model("User_Info", UserSchema);
 
 // ------------------------
 // SIGNUP ROUTE
 // ------------------------
-app.post("/api/signup", async (req, res) => {
-  const { username, password } = req.body;
+
+app.post("/api/verify", async (req, res) => {
+  const { username, password, email } = req.body;
 
   if (!username || !password) {
     return res.status(400).json({ error: "Missing fields" });

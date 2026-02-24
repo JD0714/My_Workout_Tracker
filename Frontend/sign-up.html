@@ -5,7 +5,7 @@
   <title>Workout Tracker</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <link rel="stylesheet" href="./ss.css" />
+  <link rel="stylesheet" href="./stylesheet.css" />
 
   <!-- React -->
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -22,14 +22,14 @@
 const { useState } = React;
 
 function App() {
-
+  const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
 
   const handleSignup = async () => {
-    if (!username || !password) {
-      setMessage("Please enter both fields");
+    if (!username || !password || !email) {
+      setMessage("Please enter all fields");
       return;
     }
 
@@ -37,15 +37,14 @@ function App() {
       const res = await fetch("https://workout-tracker-backend-slma.onrender.com/api/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username, password, email })
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        setMessage("Account created!");
-        setUsername("");
-        setPassword("");
+        // Redirect to verify page and pass email in URL
+        window.location.href = `./verify.html?email=${encodeURIComponent(email)}`;
       } else {
         setMessage(data.error);
       }
@@ -60,6 +59,14 @@ function App() {
 
       <div className="signup-box">
         <h2>Sign up</h2>
+        
+        <input
+            type="text"
+            placeholder="Email - used for one-time verification to prevent bots"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+        />
+
         <input
             type="text"
             placeholder="Username"
