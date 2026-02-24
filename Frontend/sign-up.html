@@ -34,7 +34,7 @@ function App() {
     }
 
     try {
-      const res = await fetch("https://workout-tracker-backend-slma.onrender.com/api/signup", {
+      const res = await fetch("https://workout-tracker-backend-slma.onrender.com/api/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password, email })
