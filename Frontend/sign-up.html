@@ -43,8 +43,8 @@ function App() {
       const data = await res.json();
 
       if (res.ok) {
-      // Redirect to verify page and pass email in URL
-      window.location.href = "https://jd0714.github.io/My_Workout_Tracker/Frontend/authentication.html?email=" + encodeURIComponent(email);
+        // Redirect to verify page and pass email in URL
+        window.location.href = `authentication.html?email=${encodeURIComponent(email)}`;      
       } else {
         setMessage(data.error);
       }
