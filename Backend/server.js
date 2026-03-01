@@ -1,25 +1,27 @@
-require("dotenv").config();
+require("dotenv").config({ path: "workout.env" });
 const express = require("express");
 const mongoose = require("mongoose");
-const cors = require("cors");
+const cors = require("cors");   //  make sure this is imported
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
-const Brevo = require("sib-api-v3-sdk");
+const nodemailer = require("nodemailer");
 
 const app = express();
 
 // ------------------------
 // MIDDLEWARE
 // ------------------------
+
+// Parse JSON bodies
 app.use(express.json());
+
+// Enable CORS for your frontend
 app.use(cors());
 
 // ------------------------
 // DATABASE CONNECTION
 // ------------------------
-mongoose.connect(
-  "mongodb+srv://jonathanadomanus_db_user:zzN061rmSVEVvsJ2@workout-tracker.ladfzlm.mongodb.net/WorkoutTracker?retryWrites=true&w=majority"
-)
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
   .catch(err => console.error(err));
 
@@ -37,17 +39,9 @@ const UserSchema = new mongoose.Schema({
 const User = mongoose.model("User_Info", UserSchema);
 
 // ------------------------
-// SETUP BREVO EMAIL
-// ------------------------
-const brevoClient = Brevo.ApiClient.instance;
-const BREVO_API_KEY = process.env.BREVO_API_KEY;
-brevoClient.authentications['api-key'].apiKey = BREVO_API_KEY;
-const emailApi = new Brevo.TransactionalEmailsApi();
-const FROM_EMAIL = "jonpig63@gmail.com"; // Must be verified in Brevo
-
-// ------------------------
 // SIGNUP ROUTE
 // ------------------------
+
 app.post("/api/verify", async (req, res) => {
   const { username, password, email } = req.body;
 
@@ -62,6 +56,7 @@ app.post("/api/verify", async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+
     const verificationCode = crypto.randomInt(0, 999999).toString().padStart(6, "0");
 
     const newUser = new User({
@@ -73,16 +68,23 @@ app.post("/api/verify", async (req, res) => {
 
     await newUser.save();
 
-    // ---- SEND VERIFICATION EMAIL VIA BREVO ----
-    await emailApi.sendTransacEmail({
-      sender: { email: FROM_EMAIL },
-      to: [{ email }],
+    // ---- SEND EMAIL ----
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
       subject: "Workout Tracker Verification Code",
-      textContent: `Your verification code is: ${verificationCode}`
+      text: `Your verification code is ${verificationCode}`
     });
 
     res.status(201).json({ message: "User created successfully" });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
@@ -92,6 +94,8 @@ app.post("/api/verify", async (req, res) => {
 // ------------------------
 // AUTHENTICATION ROUTE
 // ------------------------
+
+// Verify code
 app.post("/api/authentication", async (req, res) => {
   const { email, code } = req.body;
   if (!email || !code) return res.status(400).json({ error: "Missing fields" });
@@ -103,7 +107,7 @@ app.post("/api/authentication", async (req, res) => {
     if (user.verificationCode !== code) return res.status(400).json({ error: "Invalid code" });
 
     user.isVerified = true;
-    user.verificationCode = null;
+    user.verificationCode = null; // clear code
     await user.save();
 
     res.status(200).json({ message: "Email verified successfully" });
@@ -113,9 +117,7 @@ app.post("/api/authentication", async (req, res) => {
   }
 });
 
-// ------------------------
-// RESEND CODE ROUTE
-// ------------------------
+// Resend code
 app.post("/api/resend-code", async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: "Missing email" });
@@ -129,11 +131,19 @@ app.post("/api/resend-code", async (req, res) => {
     user.verificationCode = newCode;
     await user.save();
 
-    await emailApi.sendTransacEmail({
-      sender: { email: FROM_EMAIL },
-      to: [{ email }],
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
       subject: "Workout Tracker Verification Code",
-      textContent: `Your verification code is: ${newCode}`
+      text: `Your verification code is ${newCode}`
     });
 
     res.status(200).json({ message: "New verification code sent to your email." });
@@ -146,6 +156,7 @@ app.post("/api/resend-code", async (req, res) => {
 // ------------------------
 // LOGIN ROUTE
 // ------------------------
+
 app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
 
@@ -154,11 +165,13 @@ app.post("/api/login", async (req, res) => {
   }
 
   try {
+    //check username
     const existingUser = await User.findOne({ username });
     if (!existingUser) {
       return res.status(401).json({ error: "Invalid username or password" });
     }
 
+    //check password
     const isMatch = await bcrypt.compare(password, existingUser.password);
     if (!isMatch) {
       return res.status(401).json({ error: "Invalid username or password" });
@@ -166,11 +179,13 @@ app.post("/api/login", async (req, res) => {
 
     res.status(200).json({ message: "Login successful" });
 
-  } catch (err) {
+    } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
   }
 });
+
+
 
 // ------------------------
 // START SERVER
