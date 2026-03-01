@@ -1,21 +1,17 @@
 require("dotenv").config({ path: "workout.env" });
 const express = require("express");
 const mongoose = require("mongoose");
-const cors = require("cors");   //  make sure this is imported
+const cors = require("cors");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
-const nodemailer = require("nodemailer");
+const Brevo = require("sib-api-v3-sdk"); // Brevo SDK
 
 const app = express();
 
 // ------------------------
 // MIDDLEWARE
 // ------------------------
-
-// Parse JSON bodies
 app.use(express.json());
-
-// Enable CORS for your frontend
 app.use(cors());
 
 // ------------------------
@@ -35,56 +31,45 @@ const UserSchema = new mongoose.Schema({
   verificationCode: { type: String },
   isVerified: { type: Boolean, default: false }
 });
-
 const User = mongoose.model("User_Info", UserSchema);
+
+// ------------------------
+// SETUP BREVO EMAIL
+// ------------------------
+const brevoClient = Brevo.ApiClient.instance;
+brevoClient.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
+const emailApi = new Brevo.TransactionalEmailsApi();
+const FROM_EMAIL = process.env.FROM_EMAIL;
 
 // ------------------------
 // SIGNUP ROUTE
 // ------------------------
-
 app.post("/api/verify", async (req, res) => {
   const { username, password, email } = req.body;
-
-  if (!username || !password || !email) {
+  if (!username || !password || !email)
     return res.status(400).json({ error: "Missing fields" });
-  }
 
   try {
     const existingUser = await User.findOne({ username });
-    if (existingUser) {
+    if (existingUser)
       return res.status(409).json({ error: "Username already exists" });
-    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const verificationCode = crypto.randomInt(0, 999999).toString().padStart(6, "0");
 
-    const newUser = new User({
-      username,
-      email,
-      password: hashedPassword,
-      verificationCode
-    });
-
+    const newUser = new User({ username, email, password: hashedPassword, verificationCode });
     await newUser.save();
 
-    // ---- SEND EMAIL ----
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
-
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
+    // Send verification email via Brevo
+    await emailApi.sendTransacEmail({
+      sender: { email: FROM_EMAIL },
+      to: [{ email }],
       subject: "Workout Tracker Verification Code",
-      text: `Your verification code is ${verificationCode}`
+      textContent: `Your verification code is: ${verificationCode}`
     });
 
     res.status(201).json({ message: "User created successfully" });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
@@ -94,8 +79,6 @@ app.post("/api/verify", async (req, res) => {
 // ------------------------
 // AUTHENTICATION ROUTE
 // ------------------------
-
-// Verify code
 app.post("/api/authentication", async (req, res) => {
   const { email, code } = req.body;
   if (!email || !code) return res.status(400).json({ error: "Missing fields" });
@@ -107,7 +90,7 @@ app.post("/api/authentication", async (req, res) => {
     if (user.verificationCode !== code) return res.status(400).json({ error: "Invalid code" });
 
     user.isVerified = true;
-    user.verificationCode = null; // clear code
+    user.verificationCode = null;
     await user.save();
 
     res.status(200).json({ message: "Email verified successfully" });
@@ -117,7 +100,9 @@ app.post("/api/authentication", async (req, res) => {
   }
 });
 
-// Resend code
+// ------------------------
+// RESEND CODE ROUTE
+// ------------------------
 app.post("/api/resend-code", async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: "Missing email" });
@@ -131,19 +116,11 @@ app.post("/api/resend-code", async (req, res) => {
     user.verificationCode = newCode;
     await user.save();
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
-
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
+    await emailApi.sendTransacEmail({
+      sender: { email: FROM_EMAIL },
+      to: [{ email }],
       subject: "Workout Tracker Verification Code",
-      text: `Your verification code is ${newCode}`
+      textContent: `Your verification code is: ${newCode}`
     });
 
     res.status(200).json({ message: "New verification code sent to your email." });
@@ -156,41 +133,26 @@ app.post("/api/resend-code", async (req, res) => {
 // ------------------------
 // LOGIN ROUTE
 // ------------------------
-
 app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).json({ error: "Missing fields" });
-  }
+  if (!username || !password) return res.status(400).json({ error: "Missing fields" });
 
   try {
-    //check username
     const existingUser = await User.findOne({ username });
-    if (!existingUser) {
-      return res.status(401).json({ error: "Invalid username or password" });
-    }
+    if (!existingUser) return res.status(401).json({ error: "Invalid username or password" });
 
-    //check password
     const isMatch = await bcrypt.compare(password, existingUser.password);
-    if (!isMatch) {
-      return res.status(401).json({ error: "Invalid username or password" });
-    }
+    if (!isMatch) return res.status(401).json({ error: "Invalid username or password" });
 
     res.status(200).json({ message: "Login successful" });
-
-    } catch (err) {
+  } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
   }
 });
 
-
-
 // ------------------------
 // START SERVER
 // ------------------------
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
