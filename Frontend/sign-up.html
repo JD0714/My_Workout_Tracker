@@ -33,24 +33,30 @@ function App() {
       return;
     }
 
+    if (password.length < 8) {
+      setMessage("Password must be at least 8 characters long");
+      return;
+    }
+
     try {
-      const res = await fetch("https://workout-tracker-backend-slma.onrender.com/api/verify", {
+      // Check if username/email are available
+      const res = await fetch("https://workout-tracker-backend-slma.onrender.com/api/check-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, email })
+        body: JSON.stringify({ username, email })
       });
-
       const data = await res.json();
 
-      // Check backend message explicitly
-      if (data.message === "User created successfully") {
-        // redirect after successful signup
-        window.location.href = `authentication.html?email=${encodeURIComponent(email)}`;
+      if (data.taken) {
+        setMessage("Username or email already taken");
         return;
       }
 
-      // If backend returned an error
-      setMessage(data.error || "Unknown error");
+      // Store the signup info temporarily in sessionStorage
+      sessionStorage.setItem("signupData", JSON.stringify({ username, email, password }));
+
+      // Redirect to authentication page
+      window.location.href = "./authentication.html";
 
     } catch (err) {
       console.error(err);

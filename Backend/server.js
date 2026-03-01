@@ -42,6 +42,56 @@ const emailApi = new Brevo.TransactionalEmailsApi();
 const FROM_EMAIL = process.env.FROM_EMAIL;
 
 // ------------------------
+// HELPER FUNCTIONS
+// ------------------------
+
+// Function to check if a username or email already exists
+async function isUserTaken(username, email) {
+  const existingUser = await User.findOne({ 
+    $or: [{ username }, { email }] 
+  });
+  return !!existingUser; // true if exists, false otherwise
+}
+
+// Function to register a new user
+async function registerUser(username, email, password) {
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const verificationCode = crypto.randomInt(0, 999999)
+    .toString()
+    .padStart(6, "0");
+
+  const newUser = new User({ username, email, password: hashedPassword, verificationCode });
+  await newUser.save();
+
+  // Send verification email via Brevo
+  await emailApi.sendTransacEmail({
+    sender: { email: FROM_EMAIL },
+    to: [{ email }],
+    subject: "Workout Tracker Verification Code",
+    textContent: `Your verification code is: ${verificationCode}`
+  });
+
+  return newUser;
+}
+
+// ------------------------
+// CHECK USERNAME / EMAIL AVAILABILITY
+// ------------------------
+app.post("/api/check-user", async (req, res) => {
+  const { username, email } = req.body;
+  if (!username && !email)
+    return res.status(400).json({ error: "Provide username or email" });
+
+  try {
+    const taken = await isUserTaken(username, email);
+    res.status(200).json({ taken }); // true or false
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// ------------------------
 // SIGNUP ROUTE
 // ------------------------
 app.post("/api/verify", async (req, res) => {
@@ -50,26 +100,13 @@ app.post("/api/verify", async (req, res) => {
     return res.status(400).json({ error: "Missing fields" });
 
   try {
-    const existingUser = await User.findOne({ username });
-    if (existingUser)
-      return res.status(409).json({ error: "Username already exists" });
+    const taken = await isUserTaken(username, email);
+    if (taken)
+      return res.status(409).json({ error: "Username or email already exists" });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const verificationCode = crypto.randomInt(0, 999999).toString().padStart(6, "0");
-
-    const newUser = new User({ username, email, password: hashedPassword, verificationCode });
-    await newUser.save();
-
-    // Send verification email via Brevo
-    await emailApi.sendTransacEmail({
-      sender: { email: FROM_EMAIL },
-      to: [{ email }],
-      subject: "Workout Tracker Verification Code",
-      textContent: `Your verification code is: ${verificationCode}`
-    });
+    await registerUser(username, email, password);
 
     res.status(201).json({ message: "User created successfully" });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });

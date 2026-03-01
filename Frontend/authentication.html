@@ -22,15 +22,22 @@ function App() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [missingEmail, setMissingEmail] = useState(false);
+  const [signupData, setSignupData] = useState(null);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const userEmail = params.get("email");
-    if (!userEmail) setMissingEmail(true);
-    else setEmail(userEmail);
+    // Read signup info from sessionStorage
+    const storedData = sessionStorage.getItem("signupData");
+    if (!storedData) {
+      setMissingEmail(true);
+    } else {
+      const data = JSON.parse(storedData);
+      setEmail(data.email);
+      setSignupData(data);
+    }
   }, []);
 
   const handleAuthentication = async () => {
+    if (!signupData) { setMessage("Signup data missing"); return; }
     if (code.length !== 6) { setMessage("Enter 6-digit code"); return; }
     try {
       const res = await fetch("https://workout-tracker-backend-slma.onrender.com/api/authentication", {
@@ -39,7 +46,20 @@ function App() {
         body: JSON.stringify({ email, code })
       });
       const data = await res.json();
-      if (res.ok) window.location.href = "./index.html";
+      if (res.ok) {
+        // Once verified, register the user with signupData
+        await fetch("https://workout-tracker-backend-slma.onrender.com/api/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(signupData) // send username, email, password
+        });
+
+        // Clear temporary signup data
+        sessionStorage.removeItem("signupData");
+
+        // Redirect to login page
+        window.location.href = "./index.html";
+      }
       else setMessage(data.error || "Invalid code");
     } catch {
       setMessage("Server error");
@@ -51,7 +71,7 @@ function App() {
       const res = await fetch("https://workout-tracker-backend-slma.onrender.com/api/resend-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email: signupData.email })
       });
       const data = await res.json();
       if (res.ok) setMessage("New verification code sent to your email.");
@@ -67,7 +87,7 @@ function App() {
       e("div", { className: "signup-box" },
         e("h2", null, "Email Verification"),
         e("p", { style: { color: "red" } },
-          "No email provided. Please start from the ",
+          "No signup data found. Please start from the ",
           e("a", { href: "./sign-up.html" }, "Sign Up page"),
           "."
         )
