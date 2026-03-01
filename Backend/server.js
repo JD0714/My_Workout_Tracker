@@ -1,10 +1,10 @@
-require("dotenv").config({ path: "workout.env" });
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
-const Brevo = require("sib-api-v3-sdk"); // Brevo SDK
+const Brevo = require("sib-api-v3-sdk");
 
 const app = express();
 
@@ -17,7 +17,9 @@ app.use(cors());
 // ------------------------
 // DATABASE CONNECTION
 // ------------------------
-mongoose.connect(process.env.MONGO_URI)
+mongoose.connect(
+  "mongodb+srv://jonathanadomanus_db_user:zzN061rmSVEVvsJ2@workout-tracker.ladfzlm.mongodb.net/WorkoutTracker?retryWrites=true&w=majority"
+)
   .then(() => console.log("MongoDB connected"))
   .catch(err => console.error(err));
 
@@ -31,82 +33,56 @@ const UserSchema = new mongoose.Schema({
   verificationCode: { type: String },
   isVerified: { type: Boolean, default: false }
 });
+
 const User = mongoose.model("User_Info", UserSchema);
 
 // ------------------------
 // SETUP BREVO EMAIL
 // ------------------------
 const brevoClient = Brevo.ApiClient.instance;
-brevoClient.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
+const BREVO_API_KEY = process.env.BREVO_API_KEY;
+brevoClient.authentications['api-key'].apiKey = BREVO_API_KEY;
 const emailApi = new Brevo.TransactionalEmailsApi();
-const FROM_EMAIL = process.env.FROM_EMAIL;
-
-// ------------------------
-// HELPER FUNCTIONS
-// ------------------------
-
-// Function to check if a username or email already exists
-async function isUserTaken(username, email) {
-  const existingUser = await User.findOne({ 
-    $or: [{ username }, { email }] 
-  });
-  return !!existingUser; // true if exists, false otherwise
-}
-
-// Function to register a new user
-async function registerUser(username, email, password) {
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const verificationCode = crypto.randomInt(0, 999999)
-    .toString()
-    .padStart(6, "0");
-
-  const newUser = new User({ username, email, password: hashedPassword, verificationCode });
-  await newUser.save();
-
-  // Send verification email via Brevo
-  await emailApi.sendTransacEmail({
-    sender: { email: FROM_EMAIL },
-    to: [{ email }],
-    subject: "Workout Tracker Verification Code",
-    textContent: `Your verification code is: ${verificationCode}`
-  });
-
-  return newUser;
-}
-
-// ------------------------
-// CHECK USERNAME / EMAIL AVAILABILITY
-// ------------------------
-app.post("/api/check-user", async (req, res) => {
-  const { username, email } = req.body;
-  if (!username && !email)
-    return res.status(400).json({ error: "Provide username or email" });
-
-  try {
-    const taken = await isUserTaken(username, email);
-    res.status(200).json({ taken }); // true or false
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
-  }
-});
+const FROM_EMAIL = "jonpig63@gmail.com"; // Must be verified in Brevo
 
 // ------------------------
 // SIGNUP ROUTE
 // ------------------------
 app.post("/api/verify", async (req, res) => {
   const { username, password, email } = req.body;
-  if (!username || !password || !email)
+
+  if (!username || !password || !email) {
     return res.status(400).json({ error: "Missing fields" });
+  }
 
   try {
-    const taken = await isUserTaken(username, email);
-    if (taken)
-      return res.status(409).json({ error: "Username or email already exists" });
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(409).json({ error: "Username already exists" });
+    }
 
-    await registerUser(username, email, password);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const verificationCode = crypto.randomInt(0, 999999).toString().padStart(6, "0");
+
+    const newUser = new User({
+      username,
+      email,
+      password: hashedPassword,
+      verificationCode
+    });
+
+    await newUser.save();
+
+    // ---- SEND VERIFICATION EMAIL VIA BREVO ----
+    await emailApi.sendTransacEmail({
+      sender: { email: FROM_EMAIL },
+      to: [{ email }],
+      subject: "Workout Tracker Verification Code",
+      textContent: `Your verification code is: ${verificationCode}`
+    });
 
     res.status(201).json({ message: "User created successfully" });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
@@ -172,16 +148,24 @@ app.post("/api/resend-code", async (req, res) => {
 // ------------------------
 app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
-  if (!username || !password) return res.status(400).json({ error: "Missing fields" });
+
+  if (!username || !password) {
+    return res.status(400).json({ error: "Missing fields" });
+  }
 
   try {
     const existingUser = await User.findOne({ username });
-    if (!existingUser) return res.status(401).json({ error: "Invalid username or password" });
+    if (!existingUser) {
+      return res.status(401).json({ error: "Invalid username or password" });
+    }
 
     const isMatch = await bcrypt.compare(password, existingUser.password);
-    if (!isMatch) return res.status(401).json({ error: "Invalid username or password" });
+    if (!isMatch) {
+      return res.status(401).json({ error: "Invalid username or password" });
+    }
 
     res.status(200).json({ message: "Login successful" });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
@@ -192,4 +176,6 @@ app.post("/api/login", async (req, res) => {
 // START SERVER
 // ------------------------
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
