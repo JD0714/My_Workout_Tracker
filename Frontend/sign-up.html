@@ -32,26 +32,26 @@ function App() {
       setMessage("Please enter all fields");
       return;
     }
-    if (password.length < 8) {
-      setMessage("Password must be at least 8 characters");
-      return;
-    }
 
     try {
       const res = await fetch("https://workout-tracker-backend-slma.onrender.com/api/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password })
+        body: JSON.stringify({ username, password, email })
       });
+
       const data = await res.json();
 
-      if (!res.ok) {
-        setMessage(data.error || "Signup failed");
+      // Check backend message explicitly
+      if (data.message === "User created successfully") {
+        // redirect after successful signup
+        window.location.href = `authentication.html?email=${encodeURIComponent(email)}`;
         return;
       }
 
-      // Redirect to authentication page with email in URL
-      window.location.href = `./authentication.html?email=${encodeURIComponent(email)}`;
+      // If backend returned an error
+      setMessage(data.error || "Unknown error");
+
     } catch (err) {
       console.error(err);
       setMessage("Server connection error");
@@ -61,17 +61,38 @@ function App() {
   return (
     <div className="signup-page">
       <h1 className="title">Workout Tracker</h1>
+
       <div className="signup-box">
-        <h2>Sign Up</h2>
-        <input type="text" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
-        <input type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} />
-        <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
+        <h2>Sign up</h2>
+        
+        <input
+            type="text"
+            placeholder="Email - used for one-time verification to prevent bots"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+        />
+
+        <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={e => setUsername(e.target.value)}
+        />
+
+        <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+        />
+
         <button className="signup-btn" onClick={handleSignup}>Continue</button>
+
         {message && <p>{message}</p>}
         <p className="signup-text">
-          Already have an account? <a href="./index.html">Log In</a>
+            Already have an account? <a href="./index.html">Log In</a>
         </p>
-      </div>
+        </div>
     </div>
   );
 }
