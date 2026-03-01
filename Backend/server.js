@@ -57,16 +57,36 @@ app.post("/api/verify", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    const verificationCode = crypto.randomInt(0, 999999).toString().padStart(6, "0");
+
     const newUser = new User({
       username,
       email,
-      password: hashedPassword
+      password: hashedPassword,
+      verificationCode
     });
 
     await newUser.save();
-    res.status(201).json({ message: "User created successfully" });
 
+    // ---- SEND EMAIL ----
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Workout Tracker Verification Code",
+      text: `Your verification code is ${verificationCode}`
+    });
+
+    res.status(201).json({ message: "User created successfully" });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Server error" });
   }
 });
