@@ -79,7 +79,7 @@ app.post("/api/verify", async (req, res) => { // takes email, username, and pass
       { username, email, password: hashedPassword, verificationCode, createdAt: new Date() },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
-
+    
     // ---- SEND VERIFICATION EMAIL VIA BREVO ----
     await emailApi.sendTransacEmail({ // specifies contents of email being sent
       sender: { email: process.env.FROM_EMAIL },

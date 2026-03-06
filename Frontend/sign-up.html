@@ -42,7 +42,9 @@ function App() {
 
       const data = await res.json(); // result of running verify post
 
-      if (data.message === "Verification email sent") { // if the user was created successfully we will open the email authentication tab
+      console.log("Response status:", res.status);
+      console.log("Response body:", data);
+      if (res.ok && data.message === "Verification email sent") { // if the user was created successfully we will open the email authentication tab
         window.location.href = `authentication.html?email=${encodeURIComponent(email)}`;
         return;
       }
