@@ -28,28 +28,25 @@ function App() {
   const [message, setMessage] = useState("");
 
   const handleSignup = async () => {
-    if (!username || !password || !email) {
+    if (!username || !password || !email) { // checks if credentials are entered
       setMessage("Please enter all fields");
       return;
     }
 
     try {
-      const res = await fetch("https://workout-tracker-backend-slma.onrender.com/api/verify", {
+      const res = await fetch("https://workout-tracker-backend-slma.onrender.com/api/verify", { // tries to register users with credentials
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password, email })
       });
 
-      const data = await res.json();
+      const data = await res.json(); // result of running verify post
 
-      // Check backend message explicitly
-      if (data.message === "User created successfully") {
-        // redirect after successful signup
+      if (data.message === "User created successfully") { // if the user was created successfully we will open the email authentication tab
         window.location.href = `authentication.html?email=${encodeURIComponent(email)}`;
         return;
       }
 
-      // If backend returned an error
       setMessage(data.error || "Unknown error");
 
     } catch (err) {

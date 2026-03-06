@@ -35,6 +35,19 @@ const UserSchema = new mongoose.Schema({
 const User = mongoose.model("User_Info", UserSchema);
 
 // ------------------------
+// PENDING USER SCHEMA & MODEL
+// ------------------------
+const PendingUserSchema = new mongoose.Schema({
+  username: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  verificationCode: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now, expires: 300 } // expires in 5 minutes
+});
+
+const PendingUser = mongoose.model("PendingUser", PendingUserSchema);
+
+// ------------------------
 // SETUP BREVO EMAIL
 // ------------------------
 const brevoClient = Brevo.ApiClient.instance;
@@ -44,43 +57,47 @@ const emailApi = new Brevo.TransactionalEmailsApi();
 // ------------------------
 // SIGNUP ROUTE
 // ------------------------
-app.post("/api/verify", async (req, res) => {
+app.post("/api/verify", async (req, res) => { // takes email, username, and password, sends verification email, but does NOT save to main DB yet
   const { username, password, email } = req.body;
 
-  if (!username || !password || !email) {
+  if (!username || !password || !email) { // checks if the user has entered a username, password, and email
     return res.status(400).json({ error: "Missing fields" });
   }
 
   try {
-    const existingUser = await User.findOne({ username });
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] }); // check if username/email exists in main DB
     if (existingUser) {
-      return res.status(409).json({ error: "Username already exists" });
+      return res.status(409).json({ error: "Username or email already exists" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const verificationCode = crypto.randomInt(0, 999999).toString().padStart(6, "0");
+    const hashedPassword = await bcrypt.hash(password, 10); // hashes password so we can put it into the database
+    const verificationCode = crypto.randomInt(0, 999999).toString().padStart(6, "0"); // makes a random verification code that is 6 digits long
 
-    const newUser = new User({
-      username,
-      email,
-      password: hashedPassword,
-      verificationCode
-    });
-
-    await newUser.save();
+    // Upsert into PendingUser collection to replace any previous pending entry for the same email or username
+    await PendingUser.findOneAndUpdate(
+      { $or: [{ email }, { username }] },
+      { username, email, password: hashedPassword, verificationCode, createdAt: new Date() },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
 
     // ---- SEND VERIFICATION EMAIL VIA BREVO ----
-    await emailApi.sendTransacEmail({
+    await emailApi.sendTransacEmail({ // specifies contents of email being sent
       sender: { email: process.env.FROM_EMAIL },
       to: [{ email }],
       subject: "Workout Tracker Verification Code",
       textContent: `Your verification code is: ${verificationCode}`
     });
 
-    res.status(201).json({ message: "User created successfully" });
+    res.status(201).json({ message: "Verification email sent" });
 
   } catch (err) {
     console.error(err);
+
+    // handle duplicate key error in PendingUser unique indexes
+    if (err.code === 11000) {
+      return res.status(409).json({ error: "Username or email already pending verification" });
+    }
+
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -88,21 +105,27 @@ app.post("/api/verify", async (req, res) => {
 // ------------------------
 // AUTHENTICATION ROUTE
 // ------------------------
-app.post("/api/authentication", async (req, res) => {
+app.post("/api/authentication", async (req, res) => { // verifies code and then creates the real user in the main DB
   const { email, code } = req.body;
   if (!email || !code) return res.status(400).json({ error: "Missing fields" });
 
   try {
-    const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ error: "User not found" });
-    if (user.isVerified) return res.status(400).json({ error: "User already verified" });
-    if (user.verificationCode !== code) return res.status(400).json({ error: "Invalid code" });
+    const pendingUser = await PendingUser.findOne({ email }); // find the pending user by email
+    if (!pendingUser) return res.status(404).json({ error: "Pending user not found" });
+    if (pendingUser.verificationCode !== code) return res.status(400).json({ error: "Invalid code" });
 
-    user.isVerified = true;
-    user.verificationCode = null;
-    await user.save();
+    // ---- CREATE REAL USER AFTER VERIFICATION ----
+    const newUser = new User({ // moves verified pending user into main User collection
+      username: pendingUser.username,
+      email: pendingUser.email,
+      password: pendingUser.password,
+      isVerified: true
+    });
 
-    res.status(200).json({ message: "Email verified successfully" });
+    await newUser.save();        // saves the verified user to the main DB
+    await pendingUser.delete();  // removes the pending user record
+
+    res.status(200).json({ message: "Email verified and user created successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
