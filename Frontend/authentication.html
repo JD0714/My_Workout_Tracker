@@ -30,7 +30,7 @@ function App() {
     else setEmail(userEmail);
   }, []);
 
-  const handleAuthentication = async () => {
+  const handleAuthentication = async () => { // checks if code is valid and adds user into user_infos
     if (code.length !== 6) { setMessage("Enter 6-digit code"); return; }
     try {
       const res = await fetch("https://workout-tracker-backend-slma.onrender.com/api/authentication", {
@@ -38,10 +38,15 @@ function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, code })
       });
-      const data = await res.json();
-      if (res.ok) {
-        //ADD USER'S DATA ONCE THEY HAVE FERIFIED 
+
+      const data = await res.json()
+
+      console.log("Response status:", res.status);
+      console.log("Response body:", data);
+
+      if (res.ok && data.message === "Email verified and user created successfully") {
         window.location.href = "./index.html";
+        return;
       }
       else setMessage(data.error || "Invalid code");
     } catch {

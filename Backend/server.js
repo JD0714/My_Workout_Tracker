@@ -123,12 +123,12 @@ app.post("/api/authentication", async (req, res) => { // verifies code and then 
     });
 
     await newUser.save();        // saves the verified user to the main DB
-    await pendingUser.delete();  // removes the pending user record
+    await PendingUser.deleteOne({ email });  // removes the pending user record
 
-    res.status(200).json({ message: "Email verified and user created successfully" });
+    return res.status(200).json({ message: "Email verified and user created successfully" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Server error" });
+    res.status(500).json({ error: err.message /*"Server error"*/ });
   }
 });
 
