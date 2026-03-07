@@ -128,7 +128,7 @@ app.post("/api/authentication", async (req, res) => { // verifies code and then 
     return res.status(200).json({ message: "Email verified and user created successfully" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err.message /*"Server error"*/ });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
