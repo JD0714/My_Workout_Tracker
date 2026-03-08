@@ -45,7 +45,7 @@ function App() {
       console.log("Response body:", data);
 
       if (res.ok && data.message === "Email verified and user created successfully") {
-        window.location.href = "./index.html";
+        window.location.href = "./login.html";
         return;
       }
       else setMessage(data.error || "Invalid code");
