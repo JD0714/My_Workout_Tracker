@@ -146,3 +146,97 @@ html, body {
   font-size: 1rem;
   cursor: pointer;
 }
+
+/*Pages */
+
+#home-page {
+  min-width: 100vw;
+  min-height: 100vh;
+  padding: 0px;
+  margin: 0px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+}
+
+#tab-box {
+  position: fixed;
+  max-width: 600px;
+  max-height: 30px;
+  top: 0px;
+
+  text-align: center;
+  display: flex;
+  flex-direction: row;
+
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.tab{
+  width: 150px;
+  padding: 0px 10px;
+  border: 1.5px #333 solid;
+
+
+  font-size: 1.2rem;
+  font-weight: bold;
+  background: white;
+  color: #333;
+}
+
+.tab:hover {
+  background: #aaaaaa;
+}
+
+.tab:active {
+  background: #666666;
+}
+
+#pr_box {
+  width: 50px;
+
+  text-align: center;
+
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+#goal_box {
+  width: 50vw;
+  min-width: 200px;
+  padding: 15px 50px;
+
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-align: center;
+
+  border-radius: 20px;
+  border: transparent;
+  outline: none;
+  box-sizing: border-box;
+
+  margin: 20px auto;
+  display: block;
+
+  background: #ffffff;
+  color: #333;
+
+  overflow: hidden;
+  resize: none;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/*DELETE*/
+.temp{
+  background: red;
+}

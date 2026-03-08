@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <title>WEBSITE!!!</title>
+  <link rel="stylesheet" href="./stylesheet.css">
+
+  <!-- React -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+  <!-- Babel for JSX -->
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel"> 
+    function App() {
+
+      return (
+        <div id="home-page">
+
+          {/*the tab at the top of the screen where the user can switch between pages*/}
+          <div id="tab-box">
+            <div className="tab" style={{ borderBottomLeftRadius: 10 }} onClick={() => {window.location.href = `friends_page.html`}}> Friends </div>
+            <div className="tab" style={{ width: 100 }} onClick={() => {window.location.href = `home_page.html`;}}> Home </div>
+            <div className="tab" style={{ borderBottomRightRadius: 10,  textDecoration: "underline" }}> Spreadsheet </div>
+          </div>
+
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+  </script>
+</body>
+</html>

@@ -19,28 +19,17 @@
 
   <script type="text/babel"> 
     function App() {
-      const [color, setColor] = React.useState("blue");
-
-      const getRandomColor = () => {
-        const letters = "0123456789ABCDEF";
-        let color = "#";
-        for (let i = 0; i < 6; i++) {
-          color += letters[Math.floor(Math.random() * 16)];
-        }
-        return color;
-      };
-
-      const buttonFunction = () => {
-        setColor(getRandomColor());
-      };
 
       return (
-        <div className="login-page">
+        <div id="home-page">
 
-          <div className="login-box" style={{ width: "100vw", height: "100vh", margins: "0", padding: "0"}}>
-            <h2>Home</h2>
-
+          {/*the tab at the top of the screen where the user can switch between pages*/}
+          <div id="tab-box">
+            <div className="tab" style={{ borderBottomLeftRadius: 10,  textDecoration: "underline" }}> Friends </div>
+            <div className="tab" style={{ width: 100 }} onClick={() => {window.location.href = `home_page.html`;}}> Home </div>
+            <div className="tab" style={{ borderBottomRightRadius: 10 }} onClick={() => {window.location.href = `spreadsheet_page.html`;}}> Spreadsheet </div>
           </div>
+
         </div>
       );
     }

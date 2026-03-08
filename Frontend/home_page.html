@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <title>WEBSITE!!!</title>
+  <link rel="stylesheet" href="./stylesheet.css">
+
+  <!-- React -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+  <!-- Babel for JSX -->
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+function App() {
+  const textareaRef = React.useRef(null);
+
+  const handleInput = (e) => {
+    const textarea = textareaRef.current;
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+  };
+
+  return (
+    <div id="home-page">
+
+      {/* Tabs */}
+      <div id="tab-box">
+        <div className="tab" style={{ borderBottomLeftRadius: 10 }} onClick={() => { window.location.href = `friends_page.html`; }}> Friends </div>
+        <div className="tab" style={{ width: 100, textDecoration: "underline" }}> Home </div>
+        <div className="tab" style={{ borderBottomRightRadius: 10 }} onClick={() => { window.location.href = `spreadsheet_page.html`; }}> Spreadsheet </div>
+      </div>
+
+      {/* Personal Records */}
+      <div id="pr_box">PRs</div>
+
+      {/*DELETE*/}
+      <div className="temp">PRs Will go here</div>
+
+      {/* Goal Box */}
+      <textarea id="goal_box" placeholder="Add your goals" maxLength={300} ref={textareaRef} onChange={handleInput}/>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+  
+</body>
+
+</html>
