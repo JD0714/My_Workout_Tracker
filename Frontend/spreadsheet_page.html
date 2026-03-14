@@ -18,7 +18,30 @@
   <div id="root"></div>
 
   <script type="text/babel"> 
+
+const lifts = [
+  { id: "0001", lift: "Bench Press", weight: 135, reps: 10 },
+  { id: "0001", lift: "Squat", weight: 185, reps: 8 },
+  { id: "0001", lift: "Deadlift", weight: 225, reps: 5 },
+  { id: "0002", lift: "Overhead Press", weight: 95, reps: 12 },
+];
+
+  function LiftList({ data }) {
+    return (
+      <div className="spreadsheet-container">
+        {data.map((entry, index) => (
+          <div className="entry" key={index}>
+            <span className="lift">{entry.lift}</span>
+            <span className="weight">{entry.weight} lbs</span>
+            <span className="reps">{entry.reps} reps</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
     function App() {
+      const filteredLifts = lifts.filter(lift => lift.id === "0001");
 
       return (
         <div id="home-page">
@@ -28,6 +51,11 @@
             <div className="tab" style={{ borderBottomLeftRadius: 10 }} onClick={() => {window.location.href = `friends_page.html`}}> Friends </div>
             <div className="tab" style={{ width: 100 }} onClick={() => {window.location.href = `home_page.html`;}}> Home </div>
             <div className="tab" style={{ borderBottomRightRadius: 10,  textDecoration: "underline" }}> Spreadsheet </div>
+          </div>
+
+          <div>
+            <h1>Workout Data</h1>
+            <LiftList data={filteredLifts} />
           </div>
 
         </div>

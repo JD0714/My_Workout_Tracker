@@ -12,21 +12,42 @@
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 
   <!-- Babel for JSX -->
-  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
 
 </head>
 
 <body>
-  <div id="root"></div>
+<div id="root"></div>
 
-  <script type="text/babel">
+<script type="text/babel">
 function App() {
-  const textareaRef = React.useRef(null);
+  const [entries, setEntries] = React.useState([]);
+  const [editingIndex, setEditingIndex] = React.useState(null);
 
-  const handleInput = (e) => {
-    const textarea = textareaRef.current;
-    textarea.style.height = 'auto';
-    textarea.style.height = textarea.scrollHeight + 'px';
+  const [newEntry, setNewEntry] = React.useState({
+    exercise: "",
+    weight: "",
+    reps: "",
+    sets: ""
+  });
+
+  const handleNewChange = (field, value) => {
+    setNewEntry({ ...newEntry, [field]: value });
+  };
+
+  const addLift = () => {
+    if (!newEntry.exercise) return;
+    const now = new Date().toLocaleString();
+    const entry = { ...newEntry, date: now };
+    setEntries([...entries, entry]);
+    setNewEntry({ exercise: "", weight: "", reps: "", sets: "" });
+    setEditingIndex(null);
+  };
+
+  const updateEntry = (index, field, value) => {
+    const updated = [...entries];
+    updated[index][field] = value;
+    setEntries(updated);
   };
 
   return (
@@ -34,19 +55,97 @@ function App() {
 
       {/* Tabs */}
       <div id="tab-box">
-        <div className="tab" style={{ borderBottomLeftRadius: 10 }} onClick={() => { window.location.href = `friends_page.html`; }}> Friends </div>
-        <div className="tab" style={{ width: 100, textDecoration: "underline" }}> Home </div>
-        <div className="tab" style={{ borderBottomRightRadius: 10 }} onClick={() => { window.location.href = `spreadsheet_page.html`; }}> Spreadsheet </div>
+        <div className="tab" style={{ borderBottomLeftRadius: 10 }}
+          onClick={() => { window.location.href = 'friends_page.html'; }}>
+          Friends
+        </div>
+        <div className="tab" style={{ width: 100, textDecoration: "underline" }}>
+          Home
+        </div>
+        <div className="tab" style={{ borderBottomRightRadius: 10 }}
+          onClick={() => { window.location.href = 'spreadsheet_page.html'; }}>
+          Spreadsheet
+        </div>
       </div>
 
-      {/* Personal Records */}
-      <div id="pr_box">PRs</div>
+      {/* Top Input Row */}
+      <h2 className="title-text">Add Lift</h2>
+      <div className="entry-row">
+        <input
+          placeholder="Exercise"
+          value={newEntry.exercise}
+          onChange={(e) => handleNewChange("exercise", e.target.value)}
+        />
+        <input
+          placeholder="Weight"
+          type="number"
+          value={newEntry.weight}
+          onChange={(e) => handleNewChange("weight", e.target.value)}
+        />
+        <input
+          placeholder="Reps"
+          type="number"
+          value={newEntry.reps}
+          onChange={(e) => handleNewChange("reps", e.target.value)}
+        />
+        <input
+          placeholder="Sets"
+          type="number"
+          value={newEntry.sets}
+          onChange={(e) => handleNewChange("sets", e.target.value)}
+        />
+        <button onClick={addLift}>Add Lift</button>
+      </div>
 
-      {/*DELETE*/}
-      <div className="temp">PRs Will go here</div>
-
-      {/* Goal Box */}
-      <textarea id="goal_box" placeholder="Add your goals" maxLength={300} ref={textareaRef} onChange={handleInput}/>
+      {/* Lifts List */}
+      <h2 className="title-text">Lifts</h2>
+      <div id="lifts-container">
+        {entries.map((entry, index) => {
+          const editing = editingIndex === index;
+          return (
+            <div className="lift-row" key={index}>
+              <input
+                disabled
+                value={entry.date}
+                style={{ flex: 1.5 }}
+              />
+              <input
+                disabled={!editing}
+                placeholder="Exercise"
+                value={entry.exercise}
+                onChange={(e) => updateEntry(index, "exercise", e.target.value)}
+              />
+              <input
+                disabled={!editing}
+                type="number"
+                placeholder="Weight"
+                value={entry.weight}
+                onChange={(e) => updateEntry(index, "weight", e.target.value)}
+              />
+              <input
+                disabled={!editing}
+                type="number"
+                placeholder="Reps"
+                value={entry.reps}
+                onChange={(e) => updateEntry(index, "reps", e.target.value)}
+              />
+              <input
+                disabled={!editing}
+                type="number"
+                placeholder="Sets"
+                value={entry.sets}
+                onChange={(e) => updateEntry(index, "sets", e.target.value)}
+              />
+              <button
+                className="edit-btn"
+                onClick={() => editing ? setEditingIndex(null) : setEditingIndex(index)}
+              >
+                {editing ? "✔" : "✏️"}
+              </button>
+            </div>
+          )
+        })}
+      </div>
     </div>
   );
 }
@@ -54,7 +153,7 @@ function App() {
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<App />);
 </script>
-  
+
 </body>
 
 </html>
